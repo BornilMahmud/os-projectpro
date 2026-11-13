@@ -111,7 +111,7 @@ footer{border-top:1px solid var(--line);margin-top:42px;padding-top:22px;color:v
   <a href="#scope">14 · Scope boundaries</a>
   <a href="#next">15 · Next steps</a>
 </nav>
-<nav id="bnNav" aria-label="সূচিপত্র" style="display:none">
+<nav id="bnNav" aria-label="সূচিপত্র" hidden>
   <h3>প্রস্তাবনার বিষয়বস্তু</h3>
   <a href="#bn-overview">০১ · সারসংক্ষেপ</a>
   <a href="#bn-baseline">০২ · বর্তমান প্রজেক্ট</a>
@@ -394,8 +394,9 @@ footer{border-top:1px solid var(--line);margin-top:42px;padding-top:22px;color:v
   Proposal status: planned upgrade · Existing repository: <a href="https://github.com/rmltecdev/smd-tui" target="_blank" rel="noopener">github.com/rmltecdev/smd-tui</a><br>
   This document separates documented current functionality from proposed future work. Final implementation details may be refined after the complete code audit.
 </footer>
+</main>
 
-<main id="bnMain" style="display:none">
+<main id="bnMain" hidden>
 <div class="hero" id="bn-overview">
   <div class="eyebrow">সম্পূর্ণ প্রজেক্ট প্রপোজাল · আপগ্রেড পরিকল্পনা</div>
   <h1>Linux Hardware Intelligence.<br><span style="color:var(--cyan)">সবকিছু টার্মিনালের ভেতরে।</span></h1>
@@ -654,15 +655,28 @@ footer{border-top:1px solid var(--line);margin-top:42px;padding-top:22px;color:v
 <script>
 let currentLanguage = 'en';
 function toggleLanguage(){
-  currentLanguage = currentLanguage === 'en' ? 'bn' : 'en';
-  document.documentElement.lang = currentLanguage === 'bn' ? 'bn' : 'en';
-  document.getElementById('enMain').style.display = currentLanguage === 'en' ? 'block' : 'none';
-  document.getElementById('bnMain').style.display = currentLanguage === 'bn' ? 'block' : 'none';
-  document.querySelector('nav[aria-label="Page contents"]').style.display = currentLanguage === 'en' ? 'block' : 'none';
-  document.getElementById('bnNav').style.display = currentLanguage === 'bn' ? 'block' : 'none';
-  document.getElementById('langToggle').textContent = currentLanguage === 'en' ? 'বাংলা দেখুন' : 'Read in English';
-  document.title = currentLanguage === 'bn' ? 'SMD-TUI 2.0 — সম্পূর্ণ প্রজেক্ট প্রপোজাল' : 'SMD-TUI 2.0 — Complete Project Proposal';
-  window.scrollTo({top:0,behavior:'smooth'});
+  const toBangla = currentLanguage === 'en';
+  currentLanguage = toBangla ? 'bn' : 'en';
+
+  const englishMain = document.getElementById('enMain');
+  const banglaMain = document.getElementById('bnMain');
+  const englishNav = document.querySelector('nav[aria-label="Page contents"]');
+  const banglaNav = document.getElementById('bnNav');
+  const languageButton = document.getElementById('langToggle');
+
+  englishMain.hidden = toBangla;
+  banglaMain.hidden = !toBangla;
+  englishNav.hidden = toBangla;
+  banglaNav.hidden = !toBangla;
+
+  document.documentElement.lang = toBangla ? 'bn' : 'en';
+  languageButton.textContent = toBangla ? 'Read in English' : 'বাংলা দেখুন';
+  languageButton.setAttribute('aria-label', toBangla ? 'Switch to English' : 'Switch to Bangla');
+  document.title = toBangla
+    ? 'SMD-TUI 2.0 — সম্পূর্ণ প্রজেক্ট প্রপোজাল'
+    : 'SMD-TUI 2.0 — Complete Project Proposal';
+
+  window.scrollTo({top:0, behavior:'smooth'});
 }
 document.querySelectorAll('nav a').forEach(link=>{
   link.addEventListener('click',()=>{document.querySelectorAll('nav a').forEach(a=>a.style.background='');link.style.background='rgba(82,214,232,.10)'});
