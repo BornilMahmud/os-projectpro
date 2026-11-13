@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="SMD-TUI 2.0 complete project proposal and implementation plan">
+<title>SMD-TUI 2.0 — Complete Project Proposal</title>
+<style>
+:root{
+  --bg:#08111f;--panel:#101d30;--panel2:#14243a;--line:#263b55;
+  --text:#e8f0fb;--muted:#9fb0c6;--cyan:#52d6e8;--blue:#6a9cff;
+  --violet:#a88bff;--green:#65d6a3;--amber:#f5c66b;--red:#ff7d88;
+  --shadow:0 18px 50px rgba(0,0,0,.25);--radius:18px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{margin:0;background:radial-gradient(ellipse at 15% 0%,rgba(42,100,150,.16),transparent 38%),var(--bg);color:var(--text);font:15px/1.7 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:var(--cyan);text-decoration:none}a:hover{text-decoration:underline}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(8,17,31,.88);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.topinner{max-width:1180px;margin:auto;padding:12px 22px;display:flex;justify-content:space-between;align-items:center;gap:16px}
+.brand{font-weight:800;letter-spacing:.04em}.brand span{color:var(--cyan)}
+.top-actions{display:flex;gap:10px;align-items:center}
+.btn{border:1px solid var(--line);border-radius:10px;padding:8px 13px;color:var(--text);background:var(--panel);cursor:pointer;font:inherit;font-size:13px}
+.btn.primary{background:linear-gradient(120deg,#1d7990,#355eb5);border-color:transparent}
+.layout{max-width:1180px;margin:auto;padding:30px 22px 80px;display:grid;grid-template-columns:245px minmax(0,1fr);gap:28px}
+nav{position:sticky;top:78px;align-self:start;max-height:calc(100vh - 100px);overflow:auto;padding:17px;background:rgba(16,29,48,.8);border:1px solid var(--line);border-radius:16px}
+nav h3{font-size:11px;text-transform:uppercase;letter-spacing:.13em;color:var(--muted);margin:0 0 10px}
+nav a{display:block;padding:7px 9px;border-radius:8px;color:#c5d2e3;font-size:13px}
+nav a:hover{background:var(--panel2);text-decoration:none;color:white}
+main{min-width:0}
+.hero{padding:42px 38px;border:1px solid #2b4a69;border-radius:24px;background:linear-gradient(130deg,rgba(24,73,101,.75),rgba(30,37,76,.78)),radial-gradient(circle at 90% 10%,rgba(82,214,232,.2),transparent 30%);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.eyebrow{color:var(--cyan);font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+h1{font-size:clamp(34px,5vw,58px);line-height:1.06;letter-spacing:-.04em;margin:13px 0}
+.hero p{max-width:760px;color:#c5d5e8;font-size:17px}
+.pills{display:flex;flex-wrap:wrap;gap:9px;margin-top:22px}
+.pill{font-size:12px;padding:6px 10px;border-radius:999px;background:rgba(5,15,28,.35);border:1px solid #46627d;color:#d8e7f8}
+section{margin-top:34px;scroll-margin-top:90px}
+h2{font-size:26px;letter-spacing:-.025em;margin:0 0 8px}
+h3{font-size:17px;margin:0 0 8px}
+.lead{color:var(--muted);margin:0 0 18px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.card{background:linear-gradient(180deg,rgba(20,36,58,.92),rgba(16,29,48,.92));border:1px solid var(--line);border-radius:var(--radius);padding:19px;box-shadow:var(--shadow)}
+.card p{color:#b5c4d7;margin:7px 0 0}
+.card .icon{font-size:20px;margin-bottom:7px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:22px}
+.kpi{padding:14px;border:1px solid var(--line);background:rgba(5,15,28,.28);border-radius:13px}
+.kpi strong{display:block;font-size:22px;color:var(--cyan)}
+.kpi span{font-size:12px;color:var(--muted)}
+ul,ol{padding-left:21px;color:#c5d2e2}
+li{margin:6px 0}
+.callout{border-left:3px solid var(--cyan);background:rgba(82,214,232,.07);padding:14px 17px;border-radius:0 12px 12px 0;color:#d5e5f2;margin:16px 0}
+.warning{border-left-color:var(--amber);background:rgba(245,198,107,.07)}
+.tag{display:inline-block;padding:3px 8px;border-radius:7px;font-size:11px;font-weight:800;letter-spacing:.04em}
+.tag.existing{color:var(--green);background:rgba(101,214,163,.12)}
+.tag.proposed{color:var(--cyan);background:rgba(82,214,232,.12)}
+.tag.audit{color:var(--amber);background:rgba(245,198,107,.12)}
+table{width:100%;border-collapse:collapse;overflow:hidden;border-radius:13px;border:1px solid var(--line);font-size:13px}
+th,td{text-align:left;padding:12px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:#172a42;color:#dceafa;font-weight:700}
+td{color:#bdcadd;background:rgba(16,29,48,.65)}
+tr:last-child td{border-bottom:0}
+.arch{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.arch .node{padding:15px;border:1px solid #31506d;border-radius:12px;background:#0c1929}
+.node code{color:var(--cyan);font-weight:700}
+.node small{display:block;color:var(--muted);margin-top:4px}
+.flow{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:18px 0}
+.flow span{padding:9px 12px;border:1px solid #34516d;border-radius:9px;background:#11243a;font-size:12px}
+.flow b{color:var(--cyan)}
+.timeline{border-left:2px solid #34516d;margin:18px 0 0 10px;padding-left:22px}
+.phase{position:relative;margin:0 0 22px}
+.phase:before{content:"";position:absolute;left:-29px;top:6px;width:11px;height:11px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 4px rgba(82,214,232,.12)}
+.phase .meta{font-size:11px;color:var(--cyan);font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.phase p{margin:5px 0;color:#b8c7d9}
+.terminal{background:#050b13;border:1px solid #29435c;border-radius:14px;overflow:hidden;margin-top:14px}
+.termhead{padding:10px 14px;background:#101e30;color:#9fb0c6;font-size:12px}
+pre{margin:0;padding:18px;overflow:auto;color:#b9f3d5;font:13px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace}
+.muted{color:var(--muted)}
+footer{border-top:1px solid var(--line);margin-top:42px;padding-top:22px;color:var(--muted);font-size:13px}
+@media(max-width:850px){.layout{grid-template-columns:1fr}nav{position:relative;top:auto;max-height:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px}nav h3{grid-column:1/-1}.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.layout{padding:18px 13px 55px}.hero{padding:28px 21px}.grid,.arch{grid-template-columns:1fr}.topinner{padding:10px 13px}.top-actions .btn:not(.primary){display:none}nav{grid-template-columns:1fr 1fr}h2{font-size:23px}}
+@media print{body{background:#fff;color:#111}.topbar,nav,.top-actions{display:none!important}.layout{display:block;max-width:none;padding:0}.hero,.card,td{background:#fff!important;color:#111!important;box-shadow:none;border-color:#bbb}.hero p,.lead,.card p,ul,ol,td,.phase p{color:#333!important}h1,h2,h3{color:#111}.pill{color:#111;border-color:#aaa}.terminal{break-inside:avoid}section{break-inside:avoid-page}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topinner">
+    <div class="brand">SMD<span>-TUI</span> 2.0 <span style="color:#91a4bd;font-weight:500">/ PROJECT PROPOSAL</span></div>
+    <div class="top-actions">
+      <button class="btn" id="langToggle" onclick="toggleLanguage()" aria-label="Switch language">বাংলা দেখুন</button>
+      <button class="btn" onclick="document.body.classList.toggle('focus-mode')">Reading mode</button>
+      <button class="btn primary" onclick="window.print()">Print / Save PDF</button>
+    </div>
+  </div>
+</header>
+<div class="layout">
+<nav aria-label="Page contents">
+  <h3>Proposal contents</h3>
+  <a href="#overview">01 · Overview</a>
+  <a href="#baseline">02 · Existing project</a>
+  <a href="#audit">03 · Audit findings</a>
+  <a href="#vision">04 · Our vision</a>
+  <a href="#features">05 · Proposed features</a>
+  <a href="#interface">06 · TUI experience</a>
+  <a href="#architecture">07 · Architecture</a>
+  <a href="#workflow">08 · Data workflow</a>
+  <a href="#roadmap">09 · Roadmap</a>
+  <a href="#testing">10 · Testing & quality</a>
+  <a href="#risks">11 · Risks & safeguards</a>
+  <a href="#deliverables">12 · Deliverables</a>
+  <a href="#success">13 · Success criteria</a>
+  <a href="#scope">14 · Scope boundaries</a>
+  <a href="#next">15 · Next steps</a>
+</nav>
+<nav id="bnNav" aria-label="সূচিপত্র" style="display:none">
+  <h3>প্রস্তাবনার বিষয়বস্তু</h3>
+  <a href="#bn-overview">০১ · সারসংক্ষেপ</a>
+  <a href="#bn-baseline">০২ · বর্তমান প্রজেক্ট</a>
+  <a href="#bn-audit">০৩ · সীমাবদ্ধতা ও উন্নয়ন</a>
+  <a href="#bn-vision">০৪ · আমাদের লক্ষ্য</a>
+  <a href="#bn-features">০৫ · নতুন ফিচার</a>
+  <a href="#bn-interface">০৬ · টার্মিনাল ডিজাইন</a>
+  <a href="#bn-architecture">০৭ · আর্কিটেকচার</a>
+  <a href="#bn-workflow">০৮ · কাজের প্রক্রিয়া</a>
+  <a href="#bn-roadmap">০৯ · বাস্তবায়ন পরিকল্পনা</a>
+  <a href="#bn-testing">১০ · টেস্টিং</a>
+  <a href="#bn-risks">১১ · ঝুঁকি ও সমাধান</a>
+  <a href="#bn-deliverables">১২ · আমাদের ডেলিভারেবল</a>
+  <a href="#bn-success">১৩ · সফলতার মানদণ্ড</a>
+  <a href="#bn-scope">১৪ · প্রজেক্টের সীমা</a>
+  <a href="#bn-next">১৫ · পরবর্তী ধাপ</a>
+</nav>
+
+<main id="enMain">
+<div class="hero" id="overview">
+  <div class="eyebrow">Complete project proposal · Upgrade plan</div>
+  <h1>Linux Hardware Intelligence.<br><span style="color:var(--cyan)">Inside the Terminal.</span></h1>
+  <p><strong>SMD-TUI 2.0</strong> is a proposed evolution of the existing SMD-TUI Linux hardware monitor. We will preserve its lightweight Bash foundation and core monitoring capabilities, then improve its structure, usability, configurability, insight and reliability.</p>
+  <div class="pills">
+    <span class="pill">Bash-first</span><span class="pill">Linux-native</span><span class="pill">Interactive TUI</span><span class="pill">Modular architecture</span><span class="pill">No GUI / no browser</span>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><strong>01</strong><span>Existing project to extend</span></div>
+    <div class="kpi"><strong>2.0</strong><span>Proposed major upgrade</span></div>
+    <div class="kpi"><strong>5</strong><span>Implementation phases</span></div>
+    <div class="kpi"><strong>Linux</strong><span>Target platform</span></div>
+  </div>
+</div>
+
+<section>
+  <h2>What is this proposal about?</h2>
+  <p class="lead">We are upgrading an existing open-source terminal utility—not starting a completely new application.</p>
+  <div class="grid">
+    <article class="card"><div class="icon">🎯</div><h3>Our main objective</h3><p>Turn a useful, mostly read-only hardware dashboard into a more capable, keyboard-driven system monitoring tool while keeping it fast, terminal-native and approachable.</p></article>
+    <article class="card"><div class="icon">🧭</div><h3>Our approach</h3><p>First understand and stabilize the current code. Then refactor it into clear modules, add interactive navigation, build richer monitoring features and verify everything with repeatable tests.</p></article>
+  </div>
+  <div class="callout"><strong>Important distinction:</strong> the features marked “Existing” are documented in the current project. Features marked “Proposed” are our planned improvements and should not be presented as already implemented.</div>
+</section>
+
+<section id="baseline">
+  <h2>02 · What the existing project already does</h2>
+  <p class="lead">The original SMD-TUI is a real-time Linux system monitoring dashboard written in Bash. Its current interface is intentionally non-interactive.</p>
+  <p><a href="https://github.com/rmltecdev/smd-tui" target="_blank" rel="noopener">Open the original GitHub repository ↗</a></p>
+  <div class="grid">
+    <article class="card"><span class="tag existing">EXISTING</span><h3>CPU monitoring</h3><p>Shows CPU utilization, clock frequency, load average and processor core count.</p></article>
+    <article class="card"><span class="tag existing">EXISTING</span><h3>Memory monitoring</h3><p>Displays RAM and swap usage, memory pressure information (PSI) and swappiness.</p></article>
+    <article class="card"><span class="tag existing">EXISTING</span><h3>Process overview</h3><p>Highlights top processes by CPU and memory usage (top entries in the current dashboard).</p></article>
+    <article class="card"><span class="tag existing">EXISTING</span><h3>Thermal and fan data</h3><p>Reads available temperature sensors, including CPU/NVMe readings, and fan RPM when exposed by the system.</p></article>
+    <article class="card"><span class="tag existing">EXISTING</span><h3>Storage and I/O</h3><p>Shows root/external drive capacity and disk I/O information; external drives are detected dynamically.</p></article>
+    <article class="card"><span class="tag existing">EXISTING</span><h3>Network monitoring</h3><p>Displays IPv4 information and upload/download speed.</p></article>
+    <article class="card"><span class="tag existing">EXISTING</span><h3>Battery information</h3><p>Displays charge, power, estimated remaining time and health when supported hardware data is available.</p></article>
+    <article class="card"><span class="tag existing">EXISTING</span><h3>System identity</h3><p>Shows machine manufacturer/model, BIOS, kernel, OS, desktop environment, hostname and uptime details.</p></article>
+  </div>
+  <div class="callout"><strong>Other existing behavior:</strong> the layout adapts to terminal width, uses compact one- or two-column arrangements, warns when terminal height is insufficient and offers command-line options such as <code>--help</code>, <code>--version</code>, <code>--accent-color</code> and <code>--no-drives</code>.</div>
+</section>
+
+<section id="audit">
+  <h2>03 · What we want to improve</h2>
+  <p class="lead">These are engineering opportunities identified from the repository documentation and initial source review. They are audit targets—not a claim that every item is a confirmed defect.</p>
+  <table>
+    <thead><tr><th>Current situation / audit target</th><th>Why it matters</th><th>Our proposed response</th></tr></thead>
+    <tbody>
+      <tr><td>Large, concentrated Bash application script</td><td>Collection, calculations, state and rendering are harder to test and extend independently.</td><td>Separate the application into focused modules.</td></tr>
+      <tr><td>Dashboard is intentionally non-interactive</td><td>Users cannot quickly navigate between detailed monitoring sections using the keyboard.</td><td>Add keyboard-driven pages and controls.</td></tr>
+      <tr><td>Hardware settings require editing script variables</td><td>Configuration is inconvenient and risky for ordinary users.</td><td>Introduce an external configuration file with safe defaults.</td></tr>
+      <tr><td>Current test script is mainly smoke/metadata checking</td><td>It does not deeply validate all metric calculations and parsing edge cases.</td><td>Add unit-style tests, fixtures and integration checks.</td></tr>
+      <tr><td>Optional tools and hardware differ between Linux systems</td><td>Some sensors or commands may not exist on every machine.</td><td>Detect capabilities and show clear unavailable states.</td></tr>
+      <tr><td>Network interface accounting needs verification</td><td>Per-interface readings must correspond to the selected interface and avoid misleading totals.</td><td>Audit counters and add explicit interface selection.</td></tr>
+      <tr><td>Terminal interruption and resize behavior need validation</td><td>Unexpected exits can leave terminal display state untidy.</td><td>Harden signal handling, cleanup and resize handling.</td></tr>
+      <tr><td>Runtime dependency documentation should be reconciled</td><td>Users need to know which commands are required and which are optional.</td><td>Document and validate dependencies at startup.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="vision">
+  <h2>04 · Our SMD-TUI 2.0 vision</h2>
+  <p class="lead">A clean, fast and interactive terminal control center for understanding Linux hardware performance.</p>
+  <div class="grid">
+    <article class="card"><div class="icon">⌨️</div><h3>Keyboard-first experience</h3><p>Navigate pages, change settings and inspect system information without leaving the terminal.</p></article>
+    <article class="card"><div class="icon">📊</div><h3>More useful insight</h3><p>Show per-core metrics, short-term history, trends and threshold-based warnings—not only current readings.</p></article>
+    <article class="card"><div class="icon">🧩</div><h3>Maintainable codebase</h3><p>Keep collectors, calculations, configuration, user interface and tests separated.</p></article>
+    <article class="card"><div class="icon">🛡️</div><h3>Reliable on real machines</h3><p>Handle missing sensors, unavailable commands, counter resets, small terminals and different Linux environments gracefully.</p></article>
+  </div>
+</section>
+
+<section id="features">
+  <h2>05 · Proposed features for version 2.0</h2>
+  <p class="lead">These are the upgrades we intend to design and implement, subject to the capabilities exposed by the host Linux system.</p>
+  <div class="grid">
+    <article class="card"><span class="tag proposed">PROPOSED</span><h3>1. Interactive dashboard</h3><ul><li>Keyboard navigation with clear shortcuts.</li><li>Overview and dedicated detail pages.</li><li>Selected-page indicator and help panel.</li><li>Refresh/pause controls and settings access.</li></ul></article>
+    <article class="card"><span class="tag proposed">PROPOSED</span><h3>2. Advanced CPU page</h3><ul><li>Per-core utilization and frequency.</li><li>Load and usage history.</li><li>Expanded process view.</li><li>Clear handling when a metric is unavailable.</li></ul></article>
+    <article class="card"><span class="tag proposed">PROPOSED</span><h3>3. Memory intelligence</h3><ul><li>Detailed RAM and swap breakdown.</li><li>Memory pressure visibility.</li><li>Usage history and warning thresholds.</li><li>Readable units and stable calculations.</li></ul></article>
+    <article class="card"><span class="tag proposed">PROPOSED</span><h3>4. Thermal monitoring</h3><ul><li>Improved sensor discovery.</li><li>Configurable warning and critical temperatures.</li><li>CPU/NVMe and supported GPU temperature readings.</li><li>Fan speed where hardware exposes it.</li></ul></article>
+    <article class="card"><span class="tag proposed">PROPOSED</span><h3>5. Storage intelligence</h3><ul><li>Per-drive capacity and usage.</li><li>Per-device read/write activity where available.</li><li>Drive selection and clearer device labels.</li><li>Health data only where supported tools expose it.</li></ul></article>
+    <article class="card"><span class="tag proposed">PROPOSED</span><h3>6. Network intelligence</h3><ul><li>Select a network interface.</li><li>Per-interface upload/download rates.</li><li>Short-term traffic history.</li><li>Handle interface changes and counter resets.</li></ul></article>
+    <article class="card"><span class="tag proposed">PROPOSED</span><h3>7. Alerts and thresholds</h3><ul><li>CPU, memory, thermal and disk warnings.</li><li>User-configurable thresholds.</li><li>Warning and critical severity levels.</li><li>Visible alert history during the session.</li></ul></article>
+    <article class="card"><span class="tag proposed">PROPOSED</span><h3>8. Configuration and personalization</h3><ul><li>External config file.</li><li>Refresh interval setting.</li><li>Accent/theme preferences.</li><li>Safe defaults and config validation.</li></ul></article>
+    <article class="card"><span class="tag proposed">PROPOSED</span><h3>9. History and terminal graphs</h3><ul><li>Short rolling history buffers.</li><li>Compact text-based charts.</li><li>Trend views for selected metrics.</li><li>Bounded memory use over long sessions.</li></ul></article>
+    <article class="card"><span class="tag proposed">PROPOSED</span><h3>10. Export and diagnostics</h3><ul><li>Optional CSV or text snapshot export.</li><li>Diagnostic information for troubleshooting.</li><li>Clear indication of unavailable readings.</li><li>No fabricated or guessed hardware values.</li></ul></article>
+  </div>
+</section>
+
+<section id="interface">
+  <h2>06 · Proposed terminal user experience</h2>
+  <p class="lead">The screen below is a conceptual layout to communicate the direction. It is not a screenshot of the current application or a finished implementation.</p>
+  <div class="terminal">
+    <div class="termhead">SMD-TUI 2.0 · illustrative interface concept · values are mock data</div>
+<pre>
+┌─ SMD-TUI 2.0 ─────────────────────── Linux Hardware Monitor ─┐
+│ Overview   CPU   Memory   Thermals   Storage   Network   ⚙   │
+├───────────────────────────────┬─────────────────────────────┤
+│ CPU                           │ MEMORY                      │
+│ Total usage       24%          │ RAM used          6.2 / 16G │
+│ Core 1  ███░░░░  31%           │ ███████░░░░░░░    39%       │
+│ Core 2  ██░░░░░  18%           │ Swap used          0.4 / 4G │
+│ Core 3  ███░░░░  27%           │ Pressure          Normal    │
+├───────────────────────────────┼─────────────────────────────┤
+│ THERMALS                      │ STORAGE                     │
+│ CPU temperature    52°C        │ Root disk        68% used   │
+│ NVMe temperature   41°C        │ Read / Write     12 / 4 MB/s│
+│ Fan speed        1,240 RPM     │ External disks   1 detected │
+├───────────────────────────────┼─────────────────────────────┤
+│ NETWORK                       │ SYSTEM                      │
+│ Interface          wlan0       │ Uptime           2d 04h     │
+│ Download           2.4 MB/s    │ Kernel           Linux ...  │
+│ Upload             0.6 MB/s    │ Battery          Available  │
+├───────────────────────────────┴─────────────────────────────┤
+│ [1-8] Pages  [↑↓] Navigate  [R] Refresh  [P] Pause  [Q] Quit │
+└─────────────────────────────────────────────────────────────┘
+</pre>
+  </div>
+  <div class="callout warning"><strong>Mock data notice:</strong> CPU, memory, temperature, fan, storage and network values in this concept are examples only. Real values must come from live system collectors.</div>
+  <h3>Proposed page map</h3>
+  <table><thead><tr><th>Page</th><th>Purpose</th></tr></thead><tbody>
+    <tr><td>Overview</td><td>At-a-glance system health and key metrics.</td></tr>
+    <tr><td>CPU</td><td>Per-core usage, frequency, load and processes.</td></tr>
+    <tr><td>Memory</td><td>RAM, swap, pressure and history.</td></tr>
+    <tr><td>Thermals</td><td>Available temperatures, fans and thresholds.</td></tr>
+    <tr><td>Storage</td><td>Drive capacity, activity and supported health data.</td></tr>
+    <tr><td>Network</td><td>Interface selection, traffic rates and history.</td></tr>
+    <tr><td>Alerts</td><td>Current warnings, severity and session history.</td></tr>
+    <tr><td>Settings</td><td>Refresh rate, thresholds, colors and preferences.</td></tr>
+  </tbody></table>
+</section>
+
+<section id="architecture">
+  <h2>07 · Proposed modular architecture</h2>
+  <p class="lead">We keep Bash as the primary language, but organize the code so each responsibility can be maintained and tested independently.</p>
+  <div class="arch">
+    <div class="node"><code>app.sh</code><small>Entry point, CLI arguments, startup and main loop.</small></div>
+    <div class="node"><code>ui/</code><small>Screen rendering, layout, keyboard input and navigation.</small></div>
+    <div class="node"><code>collectors/</code><small>CPU, memory, sensors, storage and network data collection.</small></div>
+    <div class="node"><code>core/</code><small>Metric calculations, history buffers and alert evaluation.</small></div>
+    <div class="node"><code>config/</code><small>Defaults, external configuration loading and validation.</small></div>
+    <div class="node"><code>tests/</code><small>Unit-style tests, fixtures, smoke tests and integration tests.</small></div>
+  </div>
+  <div class="flow"><span>Linux sources<br><small>/proc · /sys · tools</small></span><b>→</b><span>Collectors</span><b>→</b><span>Core processing</span><b>→</b><span>UI renderer</span><b>→</b><span>Terminal</span></div>
+  <h3>How the modules work together</h3>
+  <ol>
+    <li><strong>Startup:</strong> check Bash version, required commands, terminal capabilities and configuration.</li>
+    <li><strong>Collection:</strong> collectors read operating-system counters and available hardware sensor data.</li>
+    <li><strong>Processing:</strong> core functions calculate deltas, rates, percentages, history and alert states.</li>
+    <li><strong>Rendering:</strong> the UI displays the latest data in the selected page and adapts to terminal size.</li>
+    <li><strong>Interaction:</strong> keyboard input changes pages, pauses refresh, updates settings or exits safely.</li>
+  </ol>
+  <div class="callout">The exact module filenames and data contracts will be finalized after the Phase 1 code audit. We should refactor incrementally rather than rewrite everything at once.</div>
+</section>
+
+<section id="workflow">
+  <h2>08 · Example runtime workflow</h2>
+  <p class="lead">A predictable collection cycle keeps the interface responsive and prevents one unavailable sensor from breaking the entire dashboard.</p>
+  <div class="flow"><span>Start application</span><b>→</b><span>Validate environment</span><b>→</b><span>Load config</span><b>→</b><span>Collect metrics</span></div>
+  <div class="flow"><span>Calculate rates</span><b>→</b><span>Update history</span><b>→</b><span>Evaluate alerts</span><b>→</b><span>Render page</span></div>
+  <div class="flow"><span>Wait for refresh / key</span><b>→</b><span>Repeat or exit</span></div>
+  <h3>Data sources and fallback behavior</h3>
+  <table><thead><tr><th>Information</th><th>Likely source</th><th>Fallback behavior</th></tr></thead><tbody>
+    <tr><td>CPU and memory</td><td>Linux <code>/proc</code> interfaces</td><td>Show unavailable/error state if parsing fails.</td></tr>
+    <tr><td>Hardware temperatures</td><td><code>/sys/class/thermal</code>, hwmon and supported sensor tools</td><td>Show only detected sensors; never invent a reading.</td></tr>
+    <tr><td>Storage</td><td>Filesystem utilities, <code>/proc/diskstats</code> and supported tools</td><td>Show capacity separately from optional health data.</td></tr>
+    <tr><td>Network</td><td><code>/proc/net/dev</code> and interface metadata</td><td>Handle interface disappearance and counter reset.</td></tr>
+    <tr><td>Battery</td><td>Available power-supply sysfs entries or supported tools</td><td>Hide or mark unavailable on desktop systems without a battery.</td></tr>
+  </tbody></table>
+</section>
+
+<section id="roadmap">
+  <h2>09 · Implementation roadmap</h2>
+  <p class="lead">A phased plan reduces risk and lets us verify each layer before moving forward.</p>
+  <div class="timeline">
+    <div class="phase"><div class="meta">Phase 1 · Audit & stabilize</div><h3>Understand and protect the existing project</h3><p>Review the full codebase, document current behavior, establish a baseline, verify dependencies, audit counters and terminal cleanup, and fix confirmed defects.</p></div>
+    <div class="phase"><div class="meta">Phase 2 · Refactor foundation</div><h3>Build the modular structure</h3><p>Separate collectors, core calculations, configuration and rendering. Define consistent outputs and add fixture-based tests without removing existing metrics.</p></div>
+    <div class="phase"><div class="meta">Phase 3 · Interactive TUI</div><h3>Introduce navigation and settings</h3><p>Add keyboard input, page navigation, help, pause/refresh controls, terminal resize support and external configuration.</p></div>
+    <div class="phase"><div class="meta">Phase 4 · Intelligence features</div><h3>Add deeper monitoring</h3><p>Implement per-core details, history graphs, interface selection, alert thresholds, richer storage/thermal views and optional export.</p></div>
+    <div class="phase"><div class="meta">Phase 5 · Quality & release</div><h3>Validate, document and package</h3><p>Run regression and compatibility tests, improve installation instructions, update documentation and prepare a versioned release.</p></div>
+  </div>
+</section>
+
+<section id="testing">
+  <h2>10 · Testing and quality strategy</h2>
+  <p class="lead">A monitoring tool must be trustworthy. Incorrect metrics can be worse than missing metrics.</p>
+  <div class="grid">
+    <article class="card"><h3>Unit-style tests</h3><p>Test CPU percentage, memory calculations, disk/network deltas, unit formatting and threshold evaluation with known inputs.</p></article>
+    <article class="card"><h3>Fixture tests</h3><p>Use controlled sample files that imitate relevant <code>/proc</code>, <code>/sys</code> and sensor outputs, including malformed and missing data.</p></article>
+    <article class="card"><h3>Integration tests</h3><p>Verify collectors feed valid data into core calculations and the renderer without requiring every optional sensor.</p></article>
+    <article class="card"><h3>Terminal tests</h3><p>Check narrow terminals, resizing, colors, keyboard controls, clean exit and interrupted execution.</p></article>
+    <article class="card"><h3>Compatibility tests</h3><p>Validate Bash 4+ behavior and test on selected Linux distributions and different hardware configurations.</p></article>
+    <article class="card"><h3>Regression tests</h3><p>Confirm all important original metrics remain available and retain sensible values after each refactor.</p></article>
+  </div>
+</section>
+
+<section id="risks">
+  <h2>11 · Risks and how we handle them</h2>
+  <table><thead><tr><th>Risk</th><th>Mitigation</th></tr></thead><tbody>
+    <tr><td>Hardware exposes different sensors on different machines.</td><td>Capability detection, optional collectors and explicit unavailable states.</td></tr>
+    <tr><td>Linux distributions package tools differently.</td><td>Startup dependency checks and distro-aware installation documentation.</td></tr>
+    <tr><td>Refactoring changes existing metric behavior.</td><td>Capture baseline outputs and maintain regression tests throughout the migration.</td></tr>
+    <tr><td>Sampling too frequently increases overhead.</td><td>Configurable refresh interval, efficient reads and bounded history buffers.</td></tr>
+    <tr><td>Counter resets or interfaces disappearing produce incorrect rates.</td><td>Validate deltas, detect resets and reinitialize baselines safely.</td></tr>
+    <tr><td>Terminal is resized or app is interrupted.</td><td>Handle resize and termination signals; restore cursor and terminal state on exit.</td></tr>
+    <tr><td>Optional GPU/drive health tools are unavailable.</td><td>Make advanced readings optional and clearly identify the source/capability.</td></tr>
+  </tbody></table>
+</section>
+
+<section id="deliverables">
+  <h2>12 · What we plan to deliver</h2>
+  <ul>
+    <li>Upgraded SMD-TUI 2.0 Bash application.</li>
+    <li>Modular source structure with separated collectors, core, UI and configuration.</li>
+    <li>Interactive terminal dashboard and dedicated monitoring pages.</li>
+    <li>Configurable thresholds, refresh behavior and display preferences.</li>
+    <li>Expanded automated tests and reusable test fixtures.</li>
+    <li>Updated README, manual, FAQ, dependency and installation documentation.</li>
+    <li>Release notes and a versioned release package.</li>
+  </ul>
+</section>
+
+<section id="success">
+  <h2>13 · How we will measure success</h2>
+  <table><thead><tr><th>Area</th><th>Definition of done</th></tr></thead><tbody>
+    <tr><td>Backward compatibility</td><td>Core original monitoring metrics remain present and their calculations pass regression tests.</td></tr>
+    <tr><td>Navigation</td><td>All planned pages can be reached and operated through documented keyboard shortcuts.</td></tr>
+    <tr><td>Reliability</td><td>Missing sensors or optional tools do not crash the whole application.</td></tr>
+    <tr><td>Accuracy</td><td>Metric calculations pass controlled tests; unavailable data is never fabricated.</td></tr>
+    <tr><td>Terminal behavior</td><td>Resize, small dimensions, pause and clean exit are tested.</td></tr>
+    <tr><td>Maintainability</td><td>Collectors and core calculations can be tested independently of the UI.</td></tr>
+    <tr><td>Documentation</td><td>Installation, dependencies, configuration, controls and troubleshooting are documented.</td></tr>
+  </tbody></table>
+</section>
+
+<section id="scope">
+  <h2>14 · Scope boundaries and technical decisions</h2>
+  <div class="grid">
+    <article class="card"><h3>What we are building</h3><ul><li>A Linux terminal application.</li><li>A Bash-first codebase.</li><li>Local system monitoring.</li><li>Interactive keyboard-driven TUI.</li><li>Optional local tools and native Linux data sources.</li></ul></article>
+    <article class="card"><h3>What is not in this proposal</h3><ul><li>No web application or browser dashboard.</li><li>No desktop GUI or graphical control panel.</li><li>No mandatory cloud backend or account system.</li><li>No remote monitoring service as a core dependency.</li><li>No claim that unsupported hardware data can always be read.</li></ul></article>
+  </div>
+  <div class="callout"><strong>Technology principle:</strong> keep the application lightweight and Linux-native. Optional utilities may extend hardware visibility, but the core tool should explain missing capabilities clearly rather than fail silently.</div>
+  <h3>Repository and licensing approach</h3>
+  <p class="muted">We propose forking the original repository, preserving its history and MIT license notices, then working on a dedicated development branch. Before redistribution, retain the original license and copyright notices and review any added dependency licenses.</p>
+</section>
+
+<section id="next">
+  <h2>15 · Immediate next steps</h2>
+  <ol>
+    <li>Fork the original repository and create a <code>dev</code> branch.</li>
+    <li>Run the current application and existing test script to record a baseline.</li>
+    <li>Audit the main Bash script and map every existing metric to its data source.</li>
+    <li>Agree on the initial keyboard controls, page layout and configuration format.</li>
+    <li>Refactor one collector at a time, adding tests before expanding functionality.</li>
+    <li>Build the interactive shell only after the data collection foundation is stable.</li>
+  </ol>
+  <div class="callout"><strong>Recommended first milestone:</strong> a stable modular foundation that reproduces the current dashboard's metrics. Once that baseline is proven, we can add navigation and advanced features without losing existing functionality.</div>
+</section>
+
+<footer>
+  <strong>SMD-TUI 2.0 — Linux Hardware Intelligence & Interactive Terminal Monitor</strong><br>
+  Proposal status: planned upgrade · Existing repository: <a href="https://github.com/rmltecdev/smd-tui" target="_blank" rel="noopener">github.com/rmltecdev/smd-tui</a><br>
+  This document separates documented current functionality from proposed future work. Final implementation details may be refined after the complete code audit.
+</footer>
+
+<main id="bnMain" style="display:none">
+<div class="hero" id="bn-overview">
+  <div class="eyebrow">সম্পূর্ণ প্রজেক্ট প্রপোজাল · আপগ্রেড পরিকল্পনা</div>
+  <h1>Linux Hardware Intelligence.<br><span style="color:var(--cyan)">সবকিছু টার্মিনালের ভেতরে।</span></h1>
+  <p><strong>SMD-TUI 2.0</strong> হলো বর্তমান SMD-TUI Linux hardware monitor-এর একটি উন্নত সংস্করণের প্রস্তাব। আমরা এর Bash ভিত্তি এবং মূল monitoring সুবিধাগুলো বজায় রেখে কোডের গঠন, ব্যবহারযোগ্যতা, কনফিগারেশন, তথ্য বিশ্লেষণ ও নির্ভরযোগ্যতা উন্নত করব।</p>
+  <div class="pills"><span class="pill">Bash ভিত্তিক</span><span class="pill">Linux Native</span><span class="pill">Interactive TUI</span><span class="pill">Modular Architecture</span><span class="pill">GUI / Browser নয়</span></div>
+  <div class="kpis">
+    <div class="kpi"><strong>০১</strong><span>আগের প্রজেক্টকেই উন্নত করা হবে</span></div>
+    <div class="kpi"><strong>2.0</strong><span>প্রস্তাবিত বড় আপগ্রেড</span></div>
+    <div class="kpi"><strong>৫</strong><span>বাস্তবায়নের ধাপ</span></div>
+    <div class="kpi"><strong>Linux</strong><span>টার্গেট প্ল্যাটফর্ম</span></div>
+  </div>
+</div>
+
+<section>
+  <h2>এই প্রজেক্ট প্রপোজালে কী বলা হচ্ছে?</h2>
+  <p class="lead">আমরা একেবারে নতুন অ্যাপ বানাচ্ছি না; আগে থেকেই থাকা একটি open-source terminal utility-কে আপগ্রেড করছি।</p>
+  <div class="grid">
+    <article class="card"><div class="icon">🎯</div><h3>আমাদের মূল লক্ষ্য</h3><p>বর্তমান hardware dashboard-কে আরও উন্নত, keyboard দিয়ে নিয়ন্ত্রণযোগ্য এবং তথ্যসমৃদ্ধ Linux system monitoring tool-এ পরিণত করা। অ্যাপটি হবে দ্রুত, হালকা এবং সম্পূর্ণ terminal-ভিত্তিক।</p></article>
+    <article class="card"><div class="icon">🧭</div><h3>আমাদের কাজের পদ্ধতি</h3><p>প্রথমে বর্তমান কোড বুঝে পরীক্ষা করব। এরপর কোডকে আলাদা module-এ ভাগ করব, interactive navigation যোগ করব, advanced monitoring feature তৈরি করব এবং automated test দিয়ে যাচাই করব।</p></article>
+  </div>
+  <div class="callout"><strong>গুরুত্বপূর্ণ:</strong> “বর্তমানে আছে” লেখা ফিচারগুলো আগের প্রজেক্টে রয়েছে। “প্রস্তাবিত” লেখা ফিচারগুলো আমরা ভবিষ্যতে যোগ করার পরিকল্পনা করছি—এগুলো এখনই তৈরি আছে এমন দাবি করা হচ্ছে না।</div>
+</section>
+
+<section id="bn-baseline">
+  <h2>০২ · বর্তমান প্রজেক্টে কী কী আছে?</h2>
+  <p class="lead">মূল SMD-TUI হলো Bash দিয়ে তৈরি Linux system monitoring dashboard। বর্তমান interface মূলত তথ্য দেখায়; এটি keyboard-driven interactive interface নয়।</p>
+  <p><a href="https://github.com/rmltecdev/smd-tui" target="_blank" rel="noopener">মূল GitHub Repository দেখুন ↗</a></p>
+  <div class="grid">
+    <article class="card"><span class="tag existing">বর্তমানে আছে</span><h3>CPU Monitoring</h3><p>CPU কতটুকু ব্যবহার হচ্ছে, clock frequency, load average এবং processor core-এর সংখ্যা দেখায়।</p></article>
+    <article class="card"><span class="tag existing">বর্তমানে আছে</span><h3>RAM ও Memory</h3><p>RAM, swap usage, memory pressure (PSI) এবং swappiness-এর তথ্য দেখায়।</p></article>
+    <article class="card"><span class="tag existing">বর্তমানে আছে</span><h3>Process Overview</h3><p>CPU ও RAM সবচেয়ে বেশি ব্যবহার করা process-গুলোর তালিকা দেখায়।</p></article>
+    <article class="card"><span class="tag existing">বর্তমানে আছে</span><h3>Temperature ও Fan</h3><p>সিস্টেমে পাওয়া CPU/NVMe temperature এবং hardware সমর্থন করলে fan RPM দেখায়।</p></article>
+    <article class="card"><span class="tag existing">বর্তমানে আছে</span><h3>Storage ও Disk I/O</h3><p>Root ও external drive-এর capacity এবং disk read/write activity দেখায়। External drive শনাক্ত করার সুবিধাও রয়েছে।</p></article>
+    <article class="card"><span class="tag existing">বর্তমানে আছে</span><h3>Network Monitoring</h3><p>IPv4 address এবং upload/download speed-এর তথ্য দেখায়।</p></article>
+    <article class="card"><span class="tag existing">বর্তমানে আছে</span><h3>Battery Information</h3><p>Battery charge, power, আনুমানিক remaining time ও health দেখায়—যদি hardware তথ্য সরবরাহ করে।</p></article>
+    <article class="card"><span class="tag existing">বর্তমানে আছে</span><h3>System Information</h3><p>Manufacturer/model, BIOS, kernel, operating system, hostname, uptime ইত্যাদি দেখায়।</p></article>
+  </div>
+  <div class="callout"><strong>আরও কিছু বর্তমান সুবিধা:</strong> terminal-এর width অনুযায়ী layout পরিবর্তন, জায়গা কম হলে warning, এবং <code>--help</code>, <code>--version</code>, <code>--accent-color</code>, <code>--no-drives</code> এর মতো command-line option।</div>
+</section>
+
+<section id="bn-audit">
+  <h2>০৩ · কোথায় কোথায় উন্নতি করতে চাই?</h2>
+  <p class="lead">Repository documentation ও প্রাথমিক source review থেকে নিচের উন্নয়নের জায়গাগুলো চিহ্নিত করা হয়েছে। এগুলো audit করার বিষয়—প্রতিটি বিষয়কে নিশ্চিত bug বলা হচ্ছে না।</p>
+  <table><thead><tr><th>বর্তমান অবস্থা / যাচাইয়ের বিষয়</th><th>সমস্যা বা প্রভাব</th><th>আমাদের পরিকল্পনা</th></tr></thead><tbody>
+    <tr><td>অনেক কাজ একটি বড় Bash script-এ কেন্দ্রীভূত</td><td>Data collection, calculation, state ও UI আলাদাভাবে test করা কঠিন।</td><td>কাজ অনুযায়ী আলাদা module তৈরি।</td></tr>
+    <tr><td>বর্তমান dashboard interactive নয়</td><td>Keyboard দিয়ে আলাদা monitoring page-এ যাওয়া যায় না।</td><td>Keyboard navigation ও page system যোগ।</td></tr>
+    <tr><td>কিছু setting script edit করে বদলাতে হয়</td><td>সাধারণ ব্যবহারকারীর জন্য পরিবর্তন করা ঝামেলার।</td><td>আলাদা configuration file তৈরি।</td></tr>
+    <tr><td>বর্তমান test মূলত smoke/metadata যাচাই করে</td><td>সব calculation ও parsing edge case পরীক্ষা হয় না।</td><td>Unit-style, fixture ও integration test যোগ।</td></tr>
+    <tr><td>সব Linux system-এ একই sensor/tool থাকে না</td><td>কিছু hardware reading অনুপস্থিত থাকতে পারে।</td><td>Capability detection ও পরিষ্কার unavailable message।</td></tr>
+    <tr><td>Network interface-এর হিসাব যাচাই প্রয়োজন</td><td>নির্বাচিত interface-এর সঠিক traffic দেখানো জরুরি।</td><td>Counter audit এবং interface selection যোগ।</td></tr>
+    <tr><td>Terminal resize ও হঠাৎ বন্ধ হওয়ার আচরণ যাচাই প্রয়োজন</td><td>অস্বাভাবিক exit হলে terminal state নষ্ট হতে পারে।</td><td>Signal handling ও cleanup উন্নত করা।</td></tr>
+    <tr><td>Dependency documentation আরও পরিষ্কার করা দরকার</td><td>কোন command বাধ্যতামূলক আর কোনটি optional তা বোঝা দরকার।</td><td>Startup dependency check ও install guide উন্নত করা।</td></tr>
+  </tbody></table>
+</section>
+
+<section id="bn-vision">
+  <h2>০৪ · SMD-TUI 2.0-এর আমাদের লক্ষ্য</h2>
+  <p class="lead">Linux system-এর hardware performance বোঝার জন্য একটি পরিষ্কার, দ্রুত এবং interactive terminal control center তৈরি করা।</p>
+  <div class="grid">
+    <article class="card"><div class="icon">⌨️</div><h3>Keyboard দিয়ে নিয়ন্ত্রণ</h3><p>Terminal না ছেড়েই page পরিবর্তন, settings update এবং system information দেখা যাবে।</p></article>
+    <article class="card"><div class="icon">📊</div><h3>আরও কার্যকর তথ্য</h3><p>শুধু বর্তমান reading নয়—per-core metrics, history, trend এবং warning দেখানো হবে।</p></article>
+    <article class="card"><div class="icon">🧩</div><h3>গোছানো Codebase</h3><p>Collector, calculation, configuration, UI এবং test আলাদা থাকবে।</p></article>
+    <article class="card"><div class="icon">🛡️</div><h3>বাস্তব Linux system-এ নির্ভরযোগ্যতা</h3><p>Sensor না থাকলে, tool না পেলে, terminal ছোট হলে বা interface বদলালে অ্যাপ যেন crash না করে।</p></article>
+  </div>
+</section>
+
+<section id="bn-features">
+  <h2>০৫ · Version 2.0-তে আমরা কী কী নতুন ফিচার যোগ করব?</h2>
+  <p class="lead">নিচের ফিচারগুলো আমাদের প্রস্তাবিত কাজ। কোন hardware কী তথ্য দেয় তার ওপর কিছু advanced reading নির্ভর করবে।</p>
+  <div class="grid">
+    <article class="card"><span class="tag proposed">নতুন প্রস্তাব</span><h3>১. Interactive Dashboard</h3><ul><li>Keyboard shortcut দিয়ে page পরিবর্তন।</li><li>Overview এবং আলাদা detail page।</li><li>কোন page খোলা আছে তা স্পষ্ট দেখানো।</li><li>Help, refresh ও pause control।</li></ul></article>
+    <article class="card"><span class="tag proposed">নতুন প্রস্তাব</span><h3>২. Advanced CPU Page</h3><ul><li>প্রতিটি core-এর usage ও frequency।</li><li>CPU load এবং usage history।</li><li>আরও বিস্তারিত process view।</li><li>তথ্য না পেলে unavailable দেখানো।</li></ul></article>
+    <article class="card"><span class="tag proposed">নতুন প্রস্তাব</span><h3>৩. Memory Intelligence</h3><ul><li>RAM ও swap-এর বিস্তারিত হিসাব।</li><li>Memory pressure দেখা।</li><li>Usage history ও warning threshold।</li><li>সঠিক unit ও calculation।</li></ul></article>
+    <article class="card"><span class="tag proposed">নতুন প্রস্তাব</span><h3>৪. Thermal Monitoring</h3><ul><li>আরও ভালো sensor detection।</li><li>নিজের মতো warning/critical temperature সেট করা।</li><li>সমর্থিত GPU ও NVMe temperature।</li><li>Hardware দিলে fan speed দেখানো।</li></ul></article>
+    <article class="card"><span class="tag proposed">নতুন প্রস্তাব</span><h3>৫. Storage Intelligence</h3><ul><li>প্রতিটি drive-এর capacity ও usage।</li><li>প্রতি drive-এর read/write activity।</li><li>Drive নির্বাচন ও পরিষ্কার device label।</li><li>সমর্থিত হলে health information।</li></ul></article>
+    <article class="card"><span class="tag proposed">নতুন প্রস্তাব</span><h3>৬. Network Intelligence</h3><ul><li>Network interface নির্বাচন।</li><li>প্রতিটি interface-এর upload/download rate।</li><li>Traffic history।</li><li>Interface হারিয়ে গেলে বা counter reset হলে তা সামলানো।</li></ul></article>
+    <article class="card"><span class="tag proposed">নতুন প্রস্তাব</span><h3>৭. Alert ও Threshold</h3><ul><li>CPU, RAM, temperature ও disk warning।</li><li>ব্যবহারকারী নিজে threshold সেট করতে পারবেন।</li><li>Warning ও Critical level।</li><li>চলতি session-এর alert history।</li></ul></article>
+    <article class="card"><span class="tag proposed">নতুন প্রস্তাব</span><h3>৮. Configuration ও Personalization</h3><ul><li>আলাদা config file।</li><li>Refresh interval পরিবর্তন।</li><li>Color/theme preference।</li><li>Default setting ও config validation।</li></ul></article>
+    <article class="card"><span class="tag proposed">নতুন প্রস্তাব</span><h3>৯. History ও Terminal Graph</h3><ul><li>সাম্প্রতিক data history রাখা।</li><li>Terminal-এর ভেতরে ছোট graph।</li><li>Metric-এর trend দেখা।</li><li>দীর্ঘ সময় চালালেও memory usage নিয়ন্ত্রণে রাখা।</li></ul></article>
+    <article class="card"><span class="tag proposed">নতুন প্রস্তাব</span><h3>১০. Export ও Diagnostics</h3><ul><li>প্রয়োজনে CSV বা text report export।</li><li>Troubleshooting-এর জন্য diagnostic তথ্য।</li><li>কোন reading পাওয়া যায়নি তা পরিষ্কার দেখানো।</li><li>কোনো hardware value বানিয়ে দেখানো হবে না।</li></ul></article>
+  </div>
+</section>
+
+<section id="bn-interface">
+  <h2>০৬ · নতুন Terminal Interface কেমন হবে?</h2>
+  <p class="lead">নিচেরটি শুধু আমাদের পরিকল্পিত interface-এর নমুনা। এটি বর্তমান software-এর screenshot নয় এবং এখনো বাস্তব implementation নয়।</p>
+  <div class="terminal"><div class="termhead">SMD-TUI 2.0 · উদাহরণ interface · সব value নমুনা</div><pre>
+┌─ SMD-TUI 2.0 ───────── Linux Hardware Monitor ──────────────┐
+│ Overview   CPU   Memory   Thermals   Storage   Network   ⚙  │
+├───────────────────────────────┬─────────────────────────────┤
+│ CPU                           │ MEMORY                      │
+│ Total usage       24%          │ RAM used          6.2 / 16G │
+│ Core 1  ███░░░░  31%           │ ███████░░░░░░░    39%       │
+│ Core 2  ██░░░░░  18%           │ Swap used          0.4 / 4G │
+├───────────────────────────────┼─────────────────────────────┤
+│ THERMALS                      │ STORAGE                     │
+│ CPU temperature    52°C        │ Root disk        68% used   │
+│ NVMe temperature   41°C        │ Read / Write     12 / 4 MB/s│
+├───────────────────────────────┼─────────────────────────────┤
+│ NETWORK                       │ SYSTEM                      │
+│ Interface          wlan0       │ Uptime           2d 04h     │
+│ Download           2.4 MB/s    │ Kernel           Linux ...  │
+├───────────────────────────────┴─────────────────────────────┤
+│ [1-8] Pages [↑↓] Navigate [R] Refresh [P] Pause [Q] Quit    │
+└─────────────────────────────────────────────────────────────┘
+</pre></div>
+  <div class="callout warning"><strong>নমুনা তথ্য:</strong> CPU, RAM, temperature, fan, storage ও network-এর সংখ্যাগুলো শুধু design বোঝানোর জন্য। বাস্তবে Linux system থেকে live data সংগ্রহ করে দেখানো হবে।</div>
+  <h3>আমাদের পরিকল্পিত ৮টি Page</h3>
+  <table><thead><tr><th>Page</th><th>এখানে কী দেখা যাবে?</th></tr></thead><tbody>
+    <tr><td>Overview</td><td>পুরো system-এর গুরুত্বপূর্ণ তথ্য একসঙ্গে।</td></tr>
+    <tr><td>CPU</td><td>প্রতিটি core-এর usage, frequency, load ও process।</td></tr>
+    <tr><td>Memory</td><td>RAM, swap, pressure ও history।</td></tr>
+    <tr><td>Thermals</td><td>Temperature, fan এবং threshold।</td></tr>
+    <tr><td>Storage</td><td>Drive capacity, activity ও সমর্থিত health data।</td></tr>
+    <tr><td>Network</td><td>Interface নির্বাচন, traffic rate ও history।</td></tr>
+    <tr><td>Alerts</td><td>বর্তমান warning, severity ও alert history।</td></tr>
+    <tr><td>Settings</td><td>Refresh rate, threshold, color ও preference।</td></tr>
+  </tbody></table>
+</section>
+
+<section id="bn-architecture">
+  <h2>০৭ · প্রস্তাবিত Software Architecture</h2>
+  <p class="lead">Bash-ই থাকবে মূল programming language। তবে প্রতিটি কাজ আলাদা module-এ ভাগ করব, যাতে code maintain ও test করা সহজ হয়।</p>
+  <div class="arch">
+    <div class="node"><code>app.sh</code><small>Application চালু করা, CLI argument, startup ও main loop।</small></div>
+    <div class="node"><code>ui/</code><small>Screen design, layout, keyboard input ও page navigation।</small></div>
+    <div class="node"><code>collectors/</code><small>CPU, memory, sensor, storage ও network data সংগ্রহ।</small></div>
+    <div class="node"><code>core/</code><small>Calculation, history buffer ও alert evaluation।</small></div>
+    <div class="node"><code>config/</code><small>Default setting, config load ও validation।</small></div>
+    <div class="node"><code>tests/</code><small>Unit-style test, sample fixture, smoke ও integration test।</small></div>
+  </div>
+  <div class="flow"><span>Linux data source<br><small>/proc · /sys · tools</small></span><b>→</b><span>Collectors</span><b>→</b><span>Core processing</span><b>→</b><span>UI</span><b>→</b><span>Terminal</span></div>
+  <h3>Module-গুলো কীভাবে কাজ করবে?</h3>
+  <ol>
+    <li><strong>Startup:</strong> Bash version, প্রয়োজনীয় command, terminal capability ও configuration পরীক্ষা করবে।</li>
+    <li><strong>Collection:</strong> Collector-গুলো Linux-এর system counter ও hardware sensor থেকে তথ্য নেবে।</li>
+    <li><strong>Processing:</strong> Core module percentage, rate, history এবং alert status হিসাব করবে।</li>
+    <li><strong>Rendering:</strong> UI module নির্বাচিত page-এ তথ্য দেখাবে এবং terminal size অনুযায়ী layout বদলাবে।</li>
+    <li><strong>Interaction:</strong> Keyboard input দিয়ে page বদলানো, refresh pause, settings পরিবর্তন বা exit করা যাবে।</li>
+  </ol>
+  <div class="callout">Phase 1-এর সম্পূর্ণ code audit-এর পর module-এর exact file name ও data format চূড়ান্ত হবে। একবারে সব code rewrite না করে ধাপে ধাপে refactor করব।</div>
+</section>
+
+<section id="bn-workflow">
+  <h2>০৮ · Software চালু হলে কীভাবে কাজ করবে?</h2>
+  <p class="lead">প্রতিটি refresh cycle-এ data সংগ্রহ, হিসাব, alert যাচাই ও screen update হবে। কোনো sensor না থাকলেও পুরো application বন্ধ হয়ে যাবে না।</p>
+  <div class="flow"><span>Application চালু</span><b>→</b><span>System পরীক্ষা</span><b>→</b><span>Config load</span><b>→</b><span>Data সংগ্রহ</span></div>
+  <div class="flow"><span>Calculation</span><b>→</b><span>History update</span><b>→</b><span>Alert check</span><b>→</b><span>Screen update</span></div>
+  <div class="flow"><span>Refresh / Keyboard input-এর অপেক্ষা</span><b>→</b><span>আবার চলবে অথবা Exit</span></div>
+  <h3>কোথা থেকে তথ্য সংগ্রহ করব?</h3>
+  <table><thead><tr><th>তথ্য</th><th>সম্ভাব্য Linux Source</th><th>তথ্য না পেলে</th></tr></thead><tbody>
+    <tr><td>CPU ও RAM</td><td><code>/proc</code></td><td>Unavailable বা error state দেখাবে।</td></tr>
+    <tr><td>Temperature</td><td><code>/sys/class/thermal</code>, hwmon ও sensor tools</td><td>শুধু পাওয়া sensor দেখাবে।</td></tr>
+    <tr><td>Storage</td><td>Filesystem tools, <code>/proc/diskstats</code></td><td>Capacity ও optional health আলাদা দেখাবে।</td></tr>
+    <tr><td>Network</td><td><code>/proc/net/dev</code> ও interface metadata</td><td>Interface হারালে বা counter reset হলে তা সামলাবে।</td></tr>
+    <tr><td>Battery</td><td>Power-supply sysfs অথবা সমর্থিত tool</td><td>Battery না থাকলে unavailable দেখাবে।</td></tr>
+  </tbody></table>
+</section>
+
+<section id="bn-roadmap">
+  <h2>০৯ · Implementation Roadmap — কোন কাজ আগে করব?</h2>
+  <p class="lead">প্রতিটি ধাপ যাচাই করে পরের ধাপে যাব, যাতে পুরোনো সুবিধা নষ্ট না হয়।</p>
+  <div class="timeline">
+    <div class="phase"><div class="meta">Phase 1 · Audit & Stabilize</div><h3>বর্তমান প্রজেক্ট বুঝে স্থিতিশীল করা</h3><p>সম্পূর্ণ code review, বর্তমান feature-এর তালিকা, baseline test, dependency check, counter audit এবং terminal cleanup যাচাই। নিশ্চিত সমস্যা থাকলে ঠিক করা।</p></div>
+    <div class="phase"><div class="meta">Phase 2 · Refactor Foundation</div><h3>কোডকে Module-এ ভাগ করা</h3><p>Collector, core calculation, configuration ও rendering আলাদা করা। পুরোনো metric ঠিক আছে কি না তা test করা।</p></div>
+    <div class="phase"><div class="meta">Phase 3 · Interactive TUI</div><h3>Navigation ও Settings তৈরি</h3><p>Keyboard input, page navigation, help, pause/refresh, terminal resize এবং external config যোগ করা।</p></div>
+    <div class="phase"><div class="meta">Phase 4 · Advanced Monitoring</div><h3>নতুন Monitoring Feature</h3><p>Per-core detail, history graph, interface selection, alert threshold, উন্নত storage/thermal view এবং optional export যোগ করা।</p></div>
+    <div class="phase"><div class="meta">Phase 5 · Quality & Release</div><h3>Test, Documentation ও Release</h3><p>Regression ও compatibility test, installation guide, documentation update এবং versioned release প্রস্তুত করা।</p></div>
+  </div>
+</section>
+
+<section id="bn-testing">
+  <h2>১০ · Testing ও Quality Assurance</h2>
+  <p class="lead">Hardware monitor-এর ক্ষেত্রে ভুল তথ্য দেখানোর চেয়ে তথ্য পাওয়া যাচ্ছে না—এটি পরিষ্কারভাবে দেখানো ভালো।</p>
+  <div class="grid">
+    <article class="card"><h3>Unit-style Test</h3><p>CPU percentage, RAM calculation, disk/network delta, unit formatting ও threshold হিসাব পরীক্ষা।</p></article>
+    <article class="card"><h3>Fixture Test</h3><p>আসল hardware ছাড়াই sample <code>/proc</code>, <code>/sys</code> ও sensor output দিয়ে test; missing ও ভুল data-ও পরীক্ষা।</p></article>
+    <article class="card"><h3>Integration Test</h3><p>Collector থেকে Core হয়ে UI পর্যন্ত data ঠিকভাবে যাচ্ছে কি না পরীক্ষা।</p></article>
+    <article class="card"><h3>Terminal Test</h3><p>ছোট terminal, resize, color, keyboard control, clean exit ও interrupt পরীক্ষা।</p></article>
+    <article class="card"><h3>Compatibility Test</h3><p>Bash 4+ এবং নির্বাচিত Linux distribution ও ভিন্ন hardware-এ পরীক্ষা।</p></article>
+    <article class="card"><h3>Regression Test</h3><p>নতুন update-এর পরও আগের গুরুত্বপূর্ণ monitoring feature ও হিসাব ঠিক আছে কি না পরীক্ষা।</p></article>
+  </div>
+</section>
+
+<section id="bn-risks">
+  <h2>১১ · সম্ভাব্য ঝুঁকি ও আমাদের সমাধান</h2>
+  <table><thead><tr><th>ঝুঁকি</th><th>সমাধান</th></tr></thead><tbody>
+    <tr><td>সব computer-এ একই sensor থাকে না।</td><td>Sensor detection এবং unavailable state দেখানো।</td></tr>
+    <tr><td>Linux distribution অনুযায়ী package আলাদা হতে পারে।</td><td>Startup dependency check ও installation guide।</td></tr>
+    <tr><td>Refactor করলে পুরোনো হিসাব বদলে যেতে পারে।</td><td>Baseline ও regression test রাখা।</td></tr>
+    <tr><td>অতিরিক্ত ঘন ঘন refresh করলে CPU overhead বাড়তে পারে।</td><td>Refresh interval configurable রাখা ও history সীমিত রাখা।</td></tr>
+    <tr><td>Network counter reset বা interface বন্ধ হতে পারে।</td><td>Counter reset detect করে নতুন baseline নেওয়া।</td></tr>
+    <tr><td>চালু অবস্থায় terminal resize বা interrupt হতে পারে।</td><td>Signal handling ও terminal cleanup করা।</td></tr>
+    <tr><td>GPU বা drive health tool নাও থাকতে পারে।</td><td>Advanced feature optional রাখা এবং source/capability স্পষ্ট করা।</td></tr>
+  </tbody></table>
+</section>
+
+<section id="bn-deliverables">
+  <h2>১২ · কাজ শেষে আমরা কী কী জমা দেব?</h2>
+  <ul>
+    <li>আপগ্রেড করা SMD-TUI 2.0 Bash application।</li>
+    <li>আলাদা collector, core, UI ও configuration-সহ modular source code।</li>
+    <li>Interactive terminal dashboard এবং আলাদা monitoring page।</li>
+    <li>Configurable threshold, refresh interval ও display preference।</li>
+    <li>Automated test এবং reusable sample fixture।</li>
+    <li>আপডেট করা README, manual, FAQ, dependency ও installation documentation।</li>
+    <li>Release notes এবং versioned release package।</li>
+  </ul>
+</section>
+
+<section id="bn-success">
+  <h2>১৩ · কীভাবে বুঝব প্রজেক্ট সফল হয়েছে?</h2>
+  <table><thead><tr><th>বিষয়</th><th>সফলতার শর্ত</th></tr></thead><tbody>
+    <tr><td>পুরোনো feature</td><td>আগের গুরুত্বপূর্ণ metric থাকবে এবং regression test pass করবে।</td></tr>
+    <tr><td>Navigation</td><td>সব planned page keyboard দিয়ে ব্যবহার করা যাবে।</td></tr>
+    <tr><td>নির্ভরযোগ্যতা</td><td>Sensor বা optional tool না থাকলেও app crash করবে না।</td></tr>
+    <tr><td>সঠিক তথ্য</td><td>Calculation test pass করবে; কোনো data বানিয়ে দেখানো হবে না।</td></tr>
+    <tr><td>Terminal behavior</td><td>Resize, ছোট screen, pause ও clean exit test করা থাকবে।</td></tr>
+    <tr><td>Maintainability</td><td>UI ছাড়াই collector ও calculation আলাদাভাবে test করা যাবে।</td></tr>
+    <tr><td>Documentation</td><td>Install, dependency, configuration, shortcut ও troubleshooting লেখা থাকবে।</td></tr>
+  </tbody></table>
+</section>
+
+<section id="bn-scope">
+  <h2>১৪ · প্রজেক্টের সীমা ও Technology Decision</h2>
+  <div class="grid">
+    <article class="card"><h3>আমরা যা তৈরি করছি</h3><ul><li>Linux terminal application।</li><li>Bash-first codebase।</li><li>Local system monitoring।</li><li>Keyboard-controlled interactive TUI।</li><li>Linux-এর native data source ও optional local tool।</li></ul></article>
+    <article class="card"><h3>এই প্রজেক্টে যা থাকছে না</h3><ul><li>Web application বা browser dashboard নয়।</li><li>Desktop GUI বা graphical control panel নয়।</li><li>Cloud backend বা account বাধ্যতামূলক নয়।</li><li>Remote monitoring service core dependency নয়।</li><li>যে hardware data দেয় না, তা জোর করে দেখানো হবে না।</li></ul></article>
+  </div>
+  <div class="callout"><strong>Technology Principle:</strong> প্রজেক্ট হালকা ও Linux-native রাখব। Optional utility থাকলে অতিরিক্ত তথ্য পাওয়া যাবে; না থাকলে কোন সুবিধা অনুপস্থিত তা পরিষ্কারভাবে দেখাবে।</div>
+  <h3>Repository ও License</h3>
+  <p class="muted">মূল repository fork করে history ও MIT license notice সংরক্ষণ করব। এরপর আলাদা <code>dev</code> branch-এ কাজ করব। নতুন dependency যোগ করলে তার license-ও যাচাই করব।</p>
+</section>
+
+<section id="bn-next">
+  <h2>১৫ · আমাদের পরবর্তী কাজ</h2>
+  <ol>
+    <li>মূল repository fork করে <code>dev</code> branch তৈরি।</li>
+    <li>বর্তমান application ও test script চালিয়ে baseline তৈরি।</li>
+    <li>মূল Bash script audit করে প্রতিটি metric-এর data source চিহ্নিত।</li>
+    <li>Keyboard shortcut, page layout ও config format চূড়ান্ত।</li>
+    <li>একটি collector করে refactor এবং test যোগ।</li>
+    <li>Data collection foundation stable হলে interactive interface তৈরি।</li>
+  </ol>
+  <div class="callout"><strong>প্রথম Milestone:</strong> এমন একটি modular ও stable foundation তৈরি করা, যা বর্তমান dashboard-এর সব গুরুত্বপূর্ণ metric আগের মতো সঠিকভাবে দেখাতে পারে। এরপর navigation ও advanced feature যোগ করব।</div>
+</section>
+
+<footer>
+  <strong>SMD-TUI 2.0 — Linux Hardware Intelligence & Interactive Terminal Monitor</strong><br>
+  প্রস্তাবনার অবস্থা: পরিকল্পিত আপগ্রেড · <a href="https://github.com/rmltecdev/smd-tui" target="_blank" rel="noopener">মূল GitHub Repository</a><br>
+  এই ডকুমেন্টে বর্তমান feature এবং ভবিষ্যতে প্রস্তাবিত feature আলাদা করে দেখানো হয়েছে। সম্পূর্ণ code audit-এর পর implementation detail চূড়ান্ত হতে পারে।
+</footer>
+</main>
+
+</div>
+<script>
+let currentLanguage = 'en';
+function toggleLanguage(){
+  currentLanguage = currentLanguage === 'en' ? 'bn' : 'en';
+  document.documentElement.lang = currentLanguage === 'bn' ? 'bn' : 'en';
+  document.getElementById('enMain').style.display = currentLanguage === 'en' ? 'block' : 'none';
+  document.getElementById('bnMain').style.display = currentLanguage === 'bn' ? 'block' : 'none';
+  document.querySelector('nav[aria-label="Page contents"]').style.display = currentLanguage === 'en' ? 'block' : 'none';
+  document.getElementById('bnNav').style.display = currentLanguage === 'bn' ? 'block' : 'none';
+  document.getElementById('langToggle').textContent = currentLanguage === 'en' ? 'বাংলা দেখুন' : 'Read in English';
+  document.title = currentLanguage === 'bn' ? 'SMD-TUI 2.0 — সম্পূর্ণ প্রজেক্ট প্রপোজাল' : 'SMD-TUI 2.0 — Complete Project Proposal';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('nav a').forEach(link=>{
+  link.addEventListener('click',()=>{document.querySelectorAll('nav a').forEach(a=>a.style.background='');link.style.background='rgba(82,214,232,.10)'});
+});
+</script>
+</body>
+</html>
